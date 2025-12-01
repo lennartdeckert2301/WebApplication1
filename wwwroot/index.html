@@ -10,7 +10,10 @@
             margin: 20px;
         }
 
-        #video, #quiz, #explanation {
+        #video,
+        #quiz,
+        #explanation,
+        #pixelBoard {
             display: none;
             margin-top: 20px;
         }
@@ -26,6 +29,48 @@
         .score {
             margin-top: 10px;
             color: #0b5;
+        }
+
+        #pixelBoard {
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .pixel-tools {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        #pixelPalette button {
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        #pixelGrid {
+            display: grid;
+            gap: 2px;
+            justify-content: start;
+            margin-bottom: 16px;
+        }
+
+        .pixel-cell {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            background: #f4f4f4;
+            cursor: crosshair;
+            transition: transform 0.1s ease;
+        }
+
+        .pixel-cell:hover {
+            transform: scale(1.05);
         }
     </style>
 </head>
@@ -49,6 +94,18 @@
         <video id="videoPlayer" width="720" controls></video>
     </div>
 
+    <div id="pixelBoard">
+        <h2>Pixel-Spielplatz</h2>
+        <p>Male dein eigenes Pixel-Kunstwerk. Danach geht es weiter mit dem Quiz.</p>
+        <div class="pixel-tools">
+            <strong>Farben:</strong>
+            <div id="pixelPalette"></div>
+            <button id="pixelClear">Zurücksetzen</button>
+        </div>
+        <div id="pixelGrid"></div>
+        <button id="pixelStartQuiz">Zum Quiz</button>
+    </div>
+
     <div id="quiz">
         <h2>Quiz</h2>
         <div id="quizContent"></div>
@@ -67,6 +124,14 @@
             { video: "videos/Video1.mp4", quiz: "quizzes/quiz1.json", explanation: "Das war die Erklärung zum ersten Quiz." },
             { video: null, quiz: "quizzes/quiz2.json", explanation: "Hier die Erklärung zum zweiten Quiz." },
             {
+                pixelBoard: {
+                    size: 16,
+                    palette: ["#111111", "#ff4757", "#ffa801", "#1e90ff", "#2ed573", "#ffffff"]
+                },
+                quiz: "quizzes/quiz2.json",
+                explanation: "Hier die Erklärung zum zweiten Quiz."
+            },
+            {
                 link: "https://www.pixilart.com/draw",
                 quiz: "quizzes/quiz2.json",
                 explanation: "Hier die Erklärung zum zweiten Quiz."
@@ -76,6 +141,10 @@
         let currentModule = 0;
         let currentQuestions = [];
         let timerInterval = null;
+        let pixelConfig = null;
+        let pixelBoardQuizFile = null;
+        let currentColor = "#111111";
+        let mouseDown = false;
         const defaultApiBaseUrl = "http://localhost:5017";
         const apiBaseUrl = window.location.origin.startsWith("http")
             ? window.location.origin
@@ -84,6 +153,7 @@
         function setVisible(section) {
             document.getElementById("linkBlock").style.display = section === "link" ? "block" : "none";
             document.getElementById("video").style.display = section === "video" ? "block" : "none";
+            document.getElementById("pixelBoard").style.display = section === "pixel" ? "block" : "none";
             document.getElementById("quiz").style.display = section === "quiz" ? "block" : "none";
             document.getElementById("explanation").style.display = section === "explanation" ? "block" : "none";
         }
@@ -107,11 +177,72 @@
                 const player = document.getElementById("videoPlayer");
                 player.src = m.video;
                 player.onended = () => showQuiz(m.quiz);
+            } else if (m.pixelBoard) {
+                startPixelBoard(m.pixelBoard, m.quiz);
             } else if (m.link) {
                 startLinkTimer(m.link, m.quiz);
             } else {
                 showQuiz(m.quiz);
             }
+        function startPixelBoard(config, quizFile) {
+            pixelConfig = config;
+            pixelBoardQuizFile = quizFile;
+            currentColor = config.palette?.[0] ?? "#111111";
+            buildPixelPalette(config.palette ?? ["#111111", "#ffffff"]);
+            buildPixelGrid(config.size ?? 16);
+            setVisible("pixel");
+
+            document.getElementById("pixelStartQuiz").onclick = () => showQuiz(pixelBoardQuizFile);
+            document.getElementById("pixelClear").onclick = clearPixelBoard;
+        }
+
+        function buildPixelPalette(palette) {
+            const paletteContainer = document.getElementById("pixelPalette");
+            paletteContainer.innerHTML = "";
+            palette.forEach(color => {
+                const button = document.createElement("button");
+                button.style.background = color;
+                button.title = color;
+                button.onclick = () => currentColor = color;
+                paletteContainer.appendChild(button);
+            });
+        }
+
+        function buildPixelGrid(size) {
+            const grid = document.getElementById("pixelGrid");
+            grid.innerHTML = "";
+            grid.style.gridTemplateColumns = `repeat(${size}, 24px)`;
+            grid.style.gridTemplateRows = `repeat(${size}, 24px)`;
+
+            for (let i = 0; i < size * size; i++) {
+                const cell = document.createElement("div");
+                cell.className = "pixel-cell";
+                cell.dataset.index = i;
+                cell.onmousedown = () => paintCell(cell);
+                cell.onmouseover = (e) => {
+                    if (mouseDown) {
+                        paintCell(cell);
+                    }
+                };
+                grid.appendChild(cell);
+            }
+        }
+
+        function paintCell(cell) {
+            cell.style.background = currentColor;
+            cell.dataset.color = currentColor;
+        }
+
+        function clearPixelBoard() {
+            document.querySelectorAll(".pixel-cell").forEach(cell => {
+                cell.style.background = "#f4f4f4";
+                delete cell.dataset.color;
+            });
+        }
+
+        document.addEventListener("mousedown", () => { mouseDown = true; });
+        document.addEventListener("mouseup", () => { mouseDown = false; });
+
         }
         function startVideo(videoSrc, quizFile) {
             setVisible("video");
@@ -121,22 +252,41 @@
         }
 
         function startLinkTimer(url, quizFile) {
-            setVisible("link");
-            document.getElementById("resourceLink").href = url;
-            let timeLeft = 60;
-            const timerDisplay = document.getElementById("timer");
-            timerDisplay.textContent = timeLeft;
+    setVisible("link");
 
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                timerDisplay.textContent = timeLeft;
+    const timerDisplay = document.getElementById("timer");
+    const openBtn = document.getElementById("openLinkBtn");
 
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    showQuiz(quizFile);
-                }
-            }, 1000);
+    let timeLeft = 60;
+    timerDisplay.textContent = timeLeft;
+    openedWindow = null;
+
+    openBtn.onclick = () => {
+        if (!openedWindow || openedWindow.closed) {
+            openedWindow = window.open(url, "_blank", "noopener");
         }
+    };
+
+    if (timerInterval) {
+        clearInterval(timerInterval);
+    }
+
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        timerDisplay.textContent = timeLeft;
+
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+
+            if (openedWindow && !openedWindow.closed) {
+                openedWindow.close();
+            }
+
+            showQuiz(quizFile);
+        }
+    }, 1000);
+}
 
         async function showQuiz(quizFile) {
             setVisible("quiz");

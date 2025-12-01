@@ -273,4 +273,4 @@
 /Users/lennart/Documents/Schule/WebApplication1/WebApplication1/obj/Debug/net10.0/ref/WebApplication1.dll
 /Users/lennart/Documents/Schule/WebApplication1/WebApplication1/obj/Debug/net10.0/WebApplication1.sourcelink.json
 /Users/lennart/Documents/Schule/WebApplication1/WebApplication1/obj/Debug/net10.0/compressed/roto84xoh6-{0}-c3hgk1cpxp-c3hgk1cpxp.gz
-/Users/lennart/Documents/Schule/WebApplication1/WebApplication1/obj/Debug/net10.0/compressed/xuzwmtajel-{0}-frhfmzhtlx-frhfmzhtlx.gz
+/Users/lennart/Documents/Schule/WebApplication1/WebApplication1/obj/Debug/net10.0/compressed/xuzwmtajel-{0}-1n94k3f8pg-1n94k3f8pg.gz
