@@ -1,4 +1,5 @@
 [
-  { "question": "Was ist 2+2?", "options": ["3", "4", "5", "6"], "answer": 1 },
-  { "question": "Hauptstadt von Deutschland?", "options": ["Berlin", "Paris", "Rom", "Madrid"], "answer": 0 }
+  { "question": "Welcher Monitortyp benötigt keine Hintergrundbeleuchtung?", "options": ["Plasma", "LCD", "OLED"], "answer": 2 },
+  { "question": "Welche Aussage über Plasma-Displays ist korrekt?", "options": ["Plasma-Displays erzeugen das Bild durch ionisierte Gaszellen, die selbst Licht aussenden", "Plasma-Displays benötigen eine LED-Hintergrundbeleuchtung.", "Plasma-Displays funktionieren wie LCDs und verwenden Flüssigkristalle zur Bilddarstellung."], "answer": 0 },
+  { "question": "Welche Technologie ist heutzutage am seltensten im Handel zu finden?", "options": ["Plasma", "LCD", "OLED"], "answer": 0 }
 ]
