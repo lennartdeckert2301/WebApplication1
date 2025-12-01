@@ -1,0 +1,4 @@
+[
+  { "question": "Welche Farbe hat der Himmel?", "options": ["Grün", "Blau", "Gelb", "Rot"], "answer": 1 },
+  { "question": "Wieviele Tage hat eine Woche?", "options": ["5", "6", "7", "8"], "answer": 2 }
+]
