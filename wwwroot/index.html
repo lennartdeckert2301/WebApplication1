@@ -1,179 +1,201 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <title>Lernmodule – Video, Quiz, Erklärung</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body { font-family: system-ui, sans-serif; margin: 20px; }
-    #video, #quiz, #explanation { display: none; margin-top: 20px; }
-    .question { margin-bottom: 16px; }
-    button { padding: 8px 12px; }
-    .score { margin-top: 10px; color: #0b5; }
-  </style>
+    <meta charset="UTF-8" />
+    <title>Lernmodule – Video, Quiz, Erklärung</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            margin: 20px;
+        }
+
+        #video, #quiz, #explanation {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .question {
+            margin-bottom: 16px;
+        }
+
+        button {
+            padding: 8px 12px;
+        }
+
+        .score {
+            margin-top: 10px;
+            color: #0b5;
+        }
+    </style>
 </head>
 <body>
-  <h1>Lernmodule</h1>
+    <h1>Lernmodule</h1>
 
-  <div id="moduleInfo"></div>
+    <div id="moduleInfo"></div>
 
-  <div id="video">
-    <video id="videoPlayer" width="720" controls></video>
-  </div>
+    <div id="linkBlock" style="display:none; margin-top:20px;">
+        <h2>Material</h2>
+        <p>
+            Bitte öffne den Link unten.
+            Das Quiz startet automatisch in <span id="timer">60</span> Sekunden.
+        </p>
+        <p>
+            <a id="resourceLink" href="#" target="_blank">Link öffnen</a>
+        </p>
+    </div>
 
-  <div id="quiz">
-    <h2>Quiz</h2>
-    <div id="quizContent"></div>
-    <button id="submitQuiz">Antworten prüfen & speichern</button>
-    <div id="result" class="score"></div>
-  </div>
+    <div id="video">
+        <video id="videoPlayer" width="720" controls></video>
+    </div>
 
-  <div id="explanation">
-    <h2>Erklärung</h2>
-    <p id="explanationText"></p>
-    <button id="nextModule">Nächstes Modul</button>
-  </div>
+    <div id="quiz">
+        <h2>Quiz</h2>
+        <div id="quizContent"></div>
+        <button id="submitQuiz">Antworten prüfen & speichern</button>
+        <div id="result" class="score"></div>
+    </div>
 
-  <script>
-    const modules = [
-      { video: "videos/Video1.mp4", quiz: "quizzes/quiz1.json", explanation: "erklaerung/erklarung1.json" },
-      { video: null,                quiz: "quizzes/quiz2.json", explanation: "Hier die Erklärung zum zweiten Quiz." }
-    ];
+    <div id="explanation">
+        <h2>Erklärung</h2>
+        <p id="explanationText"></p>
+        <button id="nextModule">Nächstes Modul</button>
+    </div>
 
-    let currentModule = 0;
-    let currentQuestions = [];
-    const defaultApiBaseUrl = "http://localhost:5017";
-    const apiBaseUrl = window.location.origin.startsWith("http")
-      ? window.location.origin
-      : defaultApiBaseUrl;
+    <script>
+        const modules = [
+            { video: "videos/Video1.mp4", quiz: "quizzes/quiz1.json", explanation: "Das war die Erklärung zum ersten Quiz." },
+            { video: null, quiz: "quizzes/quiz2.json", explanation: "Hier die Erklärung zum zweiten Quiz." },
+            {
+                link: "https://www.pixilart.com/draw",
+                quiz: "quizzes/quiz2.json",
+                explanation: "Hier die Erklärung zum zweiten Quiz."
+            }
+        ];
 
-    function setVisible(section) {
-      document.getElementById("video").style.display       = section === "video" ? "block" : "none";
-      document.getElementById("quiz").style.display        = section === "quiz" ? "block" : "none";
-      document.getElementById("explanation").style.display = section === "explanation" ? "block" : "none";
-    }
+        let currentModule = 0;
+        let currentQuestions = [];
+        let timerInterval = null;
+        const defaultApiBaseUrl = "http://localhost:5017";
+        const apiBaseUrl = window.location.origin.startsWith("http")
+            ? window.location.origin
+            : defaultApiBaseUrl;
 
-    function loadModule(index) {
-      const m = modules[index];
-      if (!m) {
-        document.body.innerHTML = "<h2>Alle Module abgeschlossen 🎉</h2><p>Ergebnisse kannst du unter /api/quiz/runs abrufen.</p>";
-        return;
-      }
-
-      document.getElementById("moduleInfo").textContent = `Modul ${index + 1} von ${modules.length}`;
-
-      if (m.video) {
-        setVisible("video");
-        const player = document.getElementById("videoPlayer");
-        player.src = m.video;
-        player.onended = () => showQuiz(m.quiz);
-      } else {
-        showQuiz(m.quiz);
-      }
-    }
-
-    async function showQuiz(quizFile) {
-      setVisible("quiz");
-      document.getElementById("result").textContent = "";
-      const res = await fetch(quizFile);
-      currentQuestions = await res.json();
-
-      const quizContent = document.getElementById("quizContent");
-      quizContent.innerHTML = "";
-      currentQuestions.forEach((q, i) => {
-        const div = document.createElement("div");
-        div.className = "question";
-        const optionsHtml = q.options.map((opt, j) =>
-          `<label><input type="radio" name="q${i}" value="${j}"> ${opt}</label>`
-        ).join("<br>");
-        div.innerHTML = `<p><strong>Frage ${i+1}:</strong> ${q.question}</p>${optionsHtml}`;
-        quizContent.appendChild(div);
-      });
-
-      document.getElementById("submitQuiz").onclick = submitQuizAnswers;
-    }
-
-    async function submitQuizAnswers() {
-      const answers = currentQuestions.map((q, i) => {
-        const selected = document.querySelector(`input[name="q${i}"]:checked`);
-        return {
-          question: q.question,
-          selectedIndex: selected ? parseInt(selected.value, 10) : null,
-          correctIndex: q.answer
-        };
-      });
-
-      const payload = { module: currentModule, answers };
-      const resultElement = document.getElementById("result");
-
-      try {
-        const response = await fetch(`${apiBaseUrl}/api/quiz/result`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) {
-          throw new Error(`Server antwortete mit Status ${response.status}`);
+        function setVisible(section) {
+            document.getElementById("linkBlock").style.display = section === "link" ? "block" : "none";
+            document.getElementById("video").style.display = section === "video" ? "block" : "none";
+            document.getElementById("quiz").style.display = section === "quiz" ? "block" : "none";
+            document.getElementById("explanation").style.display = section === "explanation" ? "block" : "none";
         }
 
-        const summary = await response.json();
-        const totalQuestions = summary.totalQuestions ?? summary.TotalQuestions ?? summary.total ?? summary.Total ?? answers.length;
-        const correctCount = summary.correctCount ?? summary.CorrectCount ?? summary.correct ?? summary.Correct ?? 0;
-        const moduleIndex = (summary.moduleIndex ?? summary.ModuleIndex ?? currentModule) + 1;
+        function loadModule(index) {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
 
-        resultElement.textContent = `Ergebnis: ${correctCount} von ${totalQuestions} richtig (Modul ${moduleIndex}).`;
-        await showExplanation(modules[currentModule]?.explanation);
-      } catch (error) {
-        console.error("Quiz-Ergebnis konnte nicht gespeichert werden:", error);
-        resultElement.textContent = "Speichern fehlgeschlagen (siehe Konsole). Deine Antworten wurden lokal bewertet.";
-        await showExplanation(modules[currentModule]?.explanation);
-      }
-    }
+            const m = modules[index];
+            if (!m) {
+                document.body.innerHTML = "<h2>Alle Module abgeschlossen 🎉</h2><p>Ergebnisse kannst du unter /api/quiz/runs abrufen.</p>";
+                return;
+            }
 
-    async function showExplanation(source) {
-      setVisible("explanation");
-      const explanationText = document.getElementById("explanationText");
-      explanationText.textContent = await loadExplanationText(source);
+            document.getElementById("moduleInfo").textContent = `Modul ${index + 1} von ${modules.length}`;
 
-      const button = document.getElementById("nextModule");
-      button.onclick = () => {
-        currentModule++;
+            if (m.video) {
+                setVisible("video");
+                const player = document.getElementById("videoPlayer");
+                player.src = m.video;
+                player.onended = () => showQuiz(m.quiz);
+            } else if (m.link) {
+                startLinkTimer(m.link, m.quiz);
+            } else {
+                showQuiz(m.quiz);
+            }
+        }
+        function startVideo(videoSrc, quizFile) {
+            setVisible("video");
+            const player = document.getElementById("videoPlayer");
+            player.src = videoSrc;
+            player.onended = () => showQuiz(quizFile);
+        }
+
+        function startLinkTimer(url, quizFile) {
+            setVisible("link");
+            document.getElementById("resourceLink").href = url;
+            let timeLeft = 60;
+            const timerDisplay = document.getElementById("timer");
+            timerDisplay.textContent = timeLeft;
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    showQuiz(quizFile);
+                }
+            }, 1000);
+        }
+
+        async function showQuiz(quizFile) {
+            setVisible("quiz");
+            document.getElementById("result").textContent = "";
+            const res = await fetch(quizFile);
+            currentQuestions = await res.json();
+
+            const quizContent = document.getElementById("quizContent");
+            quizContent.innerHTML = "";
+            currentQuestions.forEach((q, i) => {
+                const div = document.createElement("div");
+                div.className = "question";
+                const optionsHtml = q.options.map((opt, j) =>
+                    `<label><input type="radio" name="q${i}" value="${j}"> ${opt}</label>`
+                ).join("<br>");
+                div.innerHTML = `<p><strong>Frage ${i + 1}:</strong> ${q.question}</p>${optionsHtml}`;
+                quizContent.appendChild(div);
+            });
+
+            document.getElementById("submitQuiz").onclick = submitQuizAnswers;
+        }
+
+        async function submitQuizAnswers() {
+            const answers = currentQuestions.map((q, i) => {
+                const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                return {
+                    question: q.question,
+                    selectedIndex: selected ? parseInt(selected.value, 10) : null,
+                    correctIndex: q.answer
+                };
+            });
+
+            const payload = { module: currentModule, answers };
+            const resultElement = document.getElementById("result");
+
+            try {
+                await fetch(`${apiBaseUrl}/api/quiz/result`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+            } catch (err) {
+                console.warn("Server konnte nicht speichern, benutze lokale Auswertung.");
+            }
+
+            showExplanation(modules[currentModule].explanation);
+        }
+
+        function showExplanation(text) {
+            setVisible("explanation");
+            document.getElementById("explanationText").textContent = text;
+
+            document.getElementById("nextModule").onclick = () => {
+                currentModule++;
+                loadModule(currentModule);
+            };
+        }
+
         loadModule(currentModule);
-      };
-    }
-
-    async function loadExplanationText(source) {
-      if (!source) return "Keine Erklärung vorhanden.";
-
-      // Falls eine JSON-Datei angegeben wurde, versuchen wir diese zu laden
-      if (typeof source === "string" && source.trim().toLowerCase().endsWith(".json")) {
-        try {
-          const response = await fetch(source);
-          if (!response.ok) {
-            throw new Error(`Antwortstatus ${response.status}`);
-          }
-
-          const data = await response.json();
-          if (typeof data === "string") return data;
-          if (Array.isArray(data)) return data.join(" ");
-          if (typeof data === "object" && data !== null) {
-            if (typeof data.text === "string") return data.text;
-            if (typeof data.content === "string") return data.content;
-          }
-
-          return "Erklärung geladen, aber unbekanntes Format.";
-        } catch (error) {
-          console.error("Erklärung konnte nicht geladen werden:", error);
-          return "Erklärung konnte nicht geladen werden.";
-        }
-      }
-
-      // Standard: direkter Text
-      return String(source);
-    }
-
-    loadModule(currentModule);
-  </script>
+    </script>
 </body>
 </html>
