@@ -1,0 +1,12 @@
+[
+  {
+    "question": "Welche der folgenden Anschlüsse ist hier abgebildet?",
+    "options": [
+      "HDMI",
+      "DisplayPort",
+      "VGA",
+      "DVI"
+    ],
+    "answer": 2
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "question": "Was bedeutet die Reaktionszeit bei Monitoren?",
+    "options": [
+      "Wie schnell der Monitor hochfährt",
+      "Wie schnell Pixel ihre Farbe wechseln können",
+      "Wie schnell der PC Eingaben verarbeitet",
+      "Wie hell der Monitor werden kann"
+    ],
+    "answer": 1
+  },
+  {
+    "question": "Welche Reaktionszeit gilt bei Gaming-Monitoren als gut?",
+    "options": [
+      "20 ms",
+      "10 ms",
+      "5 ms oder weniger",
+      "50 ms"
+    ],
+    "answer": 2
+  }
+]
