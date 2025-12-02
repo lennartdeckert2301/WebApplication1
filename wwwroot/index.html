@@ -31,6 +31,11 @@
             color: #0b5;
         }
 
+        /* Erklärungs-Text: Zeilenumbrüche (\n) als Absätze anzeigen */
+        #explanationText {
+            white-space: pre-line;
+        }
+
         #pixelBoard {
             border: 2px solid #ddd;
             border-radius: 12px;
@@ -121,21 +126,21 @@
 
     <script>
         const modules = [
-            { video: "videos/Video1.mp4", quiz: "quizzes/quiz1.json", explanation: "Das war die Erklärung zum ersten Quiz." },
-            { video: null, quiz: "quizzes/quiz2.json", explanation: "Hier die Erklärung zum zweiten Quiz." },
+            { video: "videos/Video1.mp4", quiz: "quizzes/quiz1.json", explanation: "erklaerung/erklaerung1.json" },
+            { video: null, quiz: "quizzes/quiz2.json", explanation: "erklaerung/erklaerung2.json" },
+            { video: null, quiz: "quizzes/quiz3.json", explanation: "erklaerung/erklaerung3.json" },
+            { video: null, quiz: "quizzes/quiz4.json", explanation: "erklaerung/erklaerung4.json" },
+            { video: null, quiz: "quizzes/quiz5.json", explanation: "erklaerung/erklaerung5.json" },
+            { video: null, quiz: "quizzes/quiz7.json", explanation: "erklaerung/erklaerung7.json" },
+            { video: null, quiz: "quizzes/quiz8.json", explanation: "erklaerung/erklaerung8.json" },
+           
             {
                 pixelBoard: {
                     size: 16,
                     palette: ["#111111", "#ff4757", "#ffa801", "#1e90ff", "#2ed573", "#ffffff"]
                 },
-                quiz: "quizzes/quiz2.json",
-                explanation: "Hier die Erklärung zum zweiten Quiz."
+                
             },
-            {
-                link: "https://www.pixilart.com/draw",
-                quiz: "quizzes/quiz2.json",
-                explanation: "Hier die Erklärung zum zweiten Quiz."
-            }
         ];
 
         let currentModule = 0;
@@ -332,17 +337,51 @@
                 console.warn("Server konnte nicht speichern, benutze lokale Auswertung.");
             }
 
-            showExplanation(modules[currentModule].explanation);
+            await showExplanation(modules[currentModule].explanation);
         }
 
-        function showExplanation(text) {
+        async function showExplanation(source) {
             setVisible("explanation");
-            document.getElementById("explanationText").textContent = text;
+            const explanationText = document.getElementById("explanationText");
+            explanationText.textContent = await loadExplanationText(source);
 
             document.getElementById("nextModule").onclick = () => {
                 currentModule++;
                 loadModule(currentModule);
             };
+        }
+
+        async function loadExplanationText(source) {
+            if (!source) return "Keine Erklärung vorhanden.";
+
+            // Wenn ein Pfad zu einer JSON-Datei angegeben ist, diese laden
+            if (typeof source === "string" && source.trim().toLowerCase().endsWith(".json")) {
+                try {
+                    const response = await fetch(source);
+                    if (!response.ok) {
+                        throw new Error(`Status ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    // Verschiedene sinnvolle Formate erlauben:
+                    if (typeof data === "string") return data;
+                    if (Array.isArray(data)) return data.join(" ");
+                    if (typeof data === "object" && data !== null) {
+                        if (typeof data.text === "string") return data.text;
+                        if (typeof data.content === "string") return data.content;
+                        if (typeof data.description === "string") return data.description;
+                    }
+
+                    return "Erklärung geladen, aber das Format wurde nicht erkannt.";
+                } catch (error) {
+                    console.error("Erklärung konnte nicht geladen werden:", error);
+                    return "Erklärung konnte nicht geladen werden.";
+                }
+            }
+
+            // Sonst wird die Erklärung als normaler Text angezeigt
+            return String(source);
         }
 
         loadModule(currentModule);

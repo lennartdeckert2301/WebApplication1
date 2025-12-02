@@ -1,4 +1,6 @@
 [
-  { "question": "Welche Farbe hat der Himmel?", "options": ["Grün", "Blau", "Gelb", "Rot"], "answer": 1 },
-  { "question": "Wieviele Tage hat eine Woche?", "options": ["5", "6", "7", "8"], "answer": 2 }
+  { "question": "Wozu gehört die TFT-Technologie?", "options": ["TFT ist ein eigener Monitortyp, der ohne Flüssigkristalle funktioniert.", "TFT ist eine Technologie, die nur bei Plasma-Displays eingesetzt wird.", "TFT gehört zur LCD-Displaytechnologie und bezeichnet eine spezielle Art der Ansteuerung mit Dünnschichttransistoren."], "answer": 2 },
+  { "question": "Wofür steht „LED“ in einem Monitor?", "options": ["Light Emitting Liquid", "Liquid Electron Display", "Light Emitting Diode"], "answer": 2 },
+  { "question": "Welcher Satz ist richtig?", "options":["Jeder LCD-Monitor ist ein LED-Monitor", "Jeder LED-Monitor ist ein LCD-Monitor", "LED und LCD sind völlig verschiedene Technologien"], "answer": 1}
 ]
+
