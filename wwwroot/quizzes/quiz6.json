@@ -1,0 +1,17 @@
+[
+  {
+    "question": "Was ist ein Pixel?",
+    "options": [ "Eine kleine Lampe", "Das kleinste Bildelement auf dem Monitor", "Die Einschalttaste" ],
+    "answer": 2
+  },
+  {
+    "question": "Welche drei Farben mischen sich, um alle anderen Farben auf dem Monitor zu erzeugen?",
+    "options": [ "Rot, Grün, Blau", "Gelb, Schwarz, Weiß", "Rot, Orange, Violett " ],
+    "answer": 1
+  },
+  {
+    "question": "Was bedeutet die Auflösung 1920×1080?",
+    "options": [ "Die Größe des Monitors in Millimetern", "Die Anzahl der Pixel in der Breite und Höhe", "Die Anzahl der Bilder pro Sekunde" ],
+    "answer": 2
+}
+]

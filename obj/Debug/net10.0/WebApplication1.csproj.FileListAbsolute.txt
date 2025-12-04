@@ -284,4 +284,5 @@
 /Users/lennart/Documents/Schule/WebApplication1/WebApplication1/obj/Debug/net10.0/compressed/yy0lziic2j-{0}-mhwq02tfwo-mhwq02tfwo.gz
 /Users/lennart/Documents/Schule/WebApplication1/WebApplication1/obj/Debug/net10.0/compressed/xz0ub2jd4l-{0}-g8272ogq2y-g8272ogq2y.gz
 /Users/lennart/Documents/Schule/WebApplication1/WebApplication1/obj/Debug/net10.0/compressed/lceuho9ssd-{0}-p487zrozuk-p487zrozuk.gz
-/Users/lennart/Documents/Schule/WebApplication1/WebApplication1/obj/Debug/net10.0/compressed/xuzwmtajel-{0}-j5l42671xg-j5l42671xg.gz
+/Users/lennart/Documents/Schule/WebApplication1/WebApplication1/obj/Debug/net10.0/compressed/ftmt8n9j1s-{0}-gb431gi0qv-gb431gi0qv.gz
+/Users/lennart/Documents/Schule/WebApplication1/WebApplication1/obj/Debug/net10.0/compressed/xuzwmtajel-{0}-69gd2p1xs5-69gd2p1xs5.gz
