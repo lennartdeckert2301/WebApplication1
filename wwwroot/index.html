@@ -13,7 +13,8 @@
         #video,
         #quiz,
         #explanation,
-        #pixelBoard {
+        #pixelBoard,
+        #finalResults {
             display: none;
             margin-top: 20px;
         }
@@ -77,6 +78,23 @@
         .pixel-cell:hover {
             transform: scale(1.05);
         }
+
+        #finalResults table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        #finalResults th,
+        #finalResults td {
+            border: 1px solid #ccc;
+            padding: 6px 8px;
+            text-align: left;
+        }
+
+        #finalResults th {
+            background-color: #f0f0f0;
+        }
     </style>
 </head>
 <body>
@@ -124,6 +142,12 @@
         <button id="nextModule">Nächstes Modul</button>
     </div>
 
+    <div id="finalResults">
+        <h2>Ergebnisse aller Spieler</h2>
+        <p>Hier siehst du alle gespeicherten Quiz-Durchläufe.</p>
+        <div id="finalResultsContainer">Lade Ergebnisse ...</div>
+    </div>
+
     <script>
         const modules = [
             { video: "videos/Video1.mp4", quiz: "quizzes/quiz1.json", explanation: "erklaerung/erklaerung1.json" },
@@ -161,6 +185,7 @@
             document.getElementById("pixelBoard").style.display = section === "pixel" ? "block" : "none";
             document.getElementById("quiz").style.display = section === "quiz" ? "block" : "none";
             document.getElementById("explanation").style.display = section === "explanation" ? "block" : "none";
+            document.getElementById("finalResults").style.display = section === "results" ? "block" : "none";
         }
 
         function loadModule(index) {
@@ -171,7 +196,7 @@
 
             const m = modules[index];
             if (!m) {
-                document.body.innerHTML = "<h2>Alle Module abgeschlossen 🎉</h2><p>Ergebnisse kannst du unter /api/quiz/runs abrufen.</p>";
+                showFinalResults();
                 return;
             }
 
@@ -382,6 +407,55 @@
 
             // Sonst wird die Erklärung als normaler Text angezeigt
             return String(source);
+        }
+
+        async function showFinalResults() {
+            setVisible("results");
+            document.getElementById("moduleInfo").textContent = "Alle Module abgeschlossen 🎉";
+
+            const container = document.getElementById("finalResultsContainer");
+            container.textContent = "Lade Ergebnisse ...";
+
+            try {
+                const response = await fetch(`${apiBaseUrl}/api/quiz/runs`);
+                if (!response.ok) {
+                    throw new Error(`Status ${response.status}`);
+                }
+
+                const runs = await response.json();
+
+                if (!runs || runs.length === 0) {
+                    container.textContent = "Es sind noch keine Ergebnisse vorhanden.";
+                    return;
+                }
+
+                let html = "<table class=\"results-table\"><thead><tr>" +
+                    "<th>ID</th><th>Modul</th><th>Richtig</th><th>Fragen gesamt</th><th>Datum</th>" +
+                    "</tr></thead><tbody>";
+
+                runs.forEach(run => {
+                    const id = run.id ?? run.Id;
+                    const moduleIndex = (run.moduleIndex ?? run.ModuleIndex ?? 0) + 1;
+                    const correct = run.correctCount ?? run.CorrectCount ?? 0;
+                    const total = run.totalQuestions ?? run.TotalQuestions ?? 0;
+                    const createdRaw = run.createdAt ?? run.CreatedAt;
+                    const created = createdRaw ? new Date(createdRaw).toLocaleString("de-DE") : "";
+
+                    html += `<tr>
+                        <td>${id}</td>
+                        <td>${moduleIndex}</td>
+                        <td>${correct}</td>
+                        <td>${total}</td>
+                        <td>${created}</td>
+                    </tr>`;
+                });
+
+                html += "</tbody></table>";
+                container.innerHTML = html;
+            } catch (error) {
+                console.error("Ergebnisse konnten nicht geladen werden:", error);
+                container.textContent = "Ergebnisse konnten nicht geladen werden.";
+            }
         }
 
         loadModule(currentModule);
