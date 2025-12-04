@@ -11,6 +11,8 @@
         }
 
         #video,
+        #mediaChoice,
+        #image,
         #quiz,
         #explanation,
         #pixelBoard,
@@ -102,6 +104,13 @@
 
     <div id="moduleInfo"></div>
 
+    <div id="mediaChoice" style="display:none; margin-top:20px;">
+        <h2>Material auswählen</h2>
+        <p>Du kannst entscheiden, ob du das Video ansehen oder das Bild betrachten möchtest.</p>
+        <button id="mediaChoiceVideo">Video abspielen</button>
+        <button id="mediaChoiceImage" style="margin-left:8px;">Bild anzeigen</button>
+    </div>
+
     <div id="linkBlock" style="display:none; margin-top:20px;">
         <h2>Material</h2>
         <p>
@@ -115,6 +124,12 @@
 
     <div id="video">
         <video id="videoPlayer" width="720" controls></video>
+    </div>
+
+    <div id="image">
+        <img id="imageViewer" width="720" alt="Materialbild" style="display:block; max-width:100%; height:auto;" />
+        <p id="imageDescription" style="margin-top:10px; display:none;"></p>
+        <button id="imageStartQuiz" style="margin-top:12px;">Zum Quiz</button>
     </div>
 
     <div id="pixelBoard">
@@ -154,17 +169,18 @@
             { video: null, quiz: "quizzes/quiz2.json", explanation: "erklaerung/erklaerung2.json" },
             { video: null, quiz: "quizzes/quiz3.json", explanation: "erklaerung/erklaerung3.json" },
             { video: null, quiz: "quizzes/quiz4.json", explanation: "erklaerung/erklaerung4.json" },
-            { video: null, quiz: "quizzes/quiz5.json", explanation: "erklaerung/erklaerung5.json" },
-            { video: null, quiz: "quizzes/quiz7.json", explanation: "erklaerung/erklaerung7.json" },
-            { video: null, quiz: "quizzes/quiz8.json", explanation: "erklaerung/erklaerung8.json" },
-           
             {
-                pixelBoard: {
+                image: "https://images-ext-1.discordapp.net/external/MOFCMIhT1h80QgDnHBSjG8rJC5iatFEUhMZtXxA4lFw/https/blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjSKJAMpoQahBSC8qwswJxdGYTDVsgLanQ37tmNZTEcmtNA84RoJs3aUEq7ArxXNnULVXOmVuqawv7EE_upvbP8uUInAWeqMXjeRo9VipxPku0D8JQzoE2wqUVFyPaWQFUkY1RnKSQbeVs/s1600/Different%2Balignments%2Bof%2BLEDs.jpeg?format=webp&width=1852&height=1426",
+                imageDescription: "Vergleich unterschiedlicher LED-Ausrichtungen",
+                quiz: "quizzes/quiz5.json",
+                explanation: "erklaerung/erklaerung5.json"
+            },
+            { pixelBoard: {
                     size: 16,
                     palette: ["#111111", "#ff4757", "#ffa801", "#1e90ff", "#2ed573", "#ffffff"]
-                },
-                
-            },
+                }, quiz: "quizzes/quiz6.json", explanation: "erklaerung/erklaerung6.json" },
+            { video: null, quiz: "quizzes/quiz7.json", explanation: "erklaerung/erklaerung7.json" },
+            { video: null, quiz: "quizzes/quiz8.json", explanation: "erklaerung/erklaerung8.json" },
         ];
 
         let currentModule = 0;
@@ -181,7 +197,9 @@
 
         function setVisible(section) {
             document.getElementById("linkBlock").style.display = section === "link" ? "block" : "none";
+            document.getElementById("mediaChoice").style.display = section === "choice" ? "block" : "none";
             document.getElementById("video").style.display = section === "video" ? "block" : "none";
+            document.getElementById("image").style.display = section === "image" ? "block" : "none";
             document.getElementById("pixelBoard").style.display = section === "pixel" ? "block" : "none";
             document.getElementById("quiz").style.display = section === "quiz" ? "block" : "none";
             document.getElementById("explanation").style.display = section === "explanation" ? "block" : "none";
@@ -202,7 +220,11 @@
 
             document.getElementById("moduleInfo").textContent = `Modul ${index + 1} von ${modules.length}`;
 
-            if (m.video) {
+            if (m.image && m.video) {
+                showMediaChoice(m.video, m.image, m.quiz, m.imageDescription);
+            } else if (m.image) {
+                startImage(m.image, m.quiz, m.imageDescription);
+            } else if (m.video) {
                 setVisible("video");
                 const player = document.getElementById("videoPlayer");
                 player.src = m.video;
@@ -279,6 +301,30 @@
             const player = document.getElementById("videoPlayer");
             player.src = videoSrc;
             player.onended = () => showQuiz(quizFile);
+        }
+
+        function startImage(imageSrc, quizFile, description) {
+            setVisible("image");
+            const image = document.getElementById("imageViewer");
+            const button = document.getElementById("imageStartQuiz");
+            const descriptionElement = document.getElementById("imageDescription");
+            image.src = imageSrc;
+            if (description) {
+                descriptionElement.textContent = description;
+                descriptionElement.style.display = "block";
+            } else {
+                descriptionElement.textContent = "";
+                descriptionElement.style.display = "none";
+            }
+            button.onclick = () => showQuiz(quizFile);
+        }
+
+        function showMediaChoice(videoSrc, imageSrc, quizFile, description) {
+            setVisible("choice");
+            const videoBtn = document.getElementById("mediaChoiceVideo");
+            const imageBtn = document.getElementById("mediaChoiceImage");
+            videoBtn.onclick = () => startVideo(videoSrc, quizFile);
+            imageBtn.onclick = () => startImage(imageSrc, quizFile, description);
         }
 
         function startLinkTimer(url, quizFile) {
