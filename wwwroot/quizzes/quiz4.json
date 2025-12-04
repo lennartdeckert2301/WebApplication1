@@ -1,0 +1,17 @@
+[
+  {
+    "question": "Wofür ist die Hintergrundbeleuchtung da?",
+    "options": [ "Sie berechnet das Bild", "Sie leuchtet das LCD von hinten aus", "Sie zeigt Farben an" ],
+    "answer": 2
+  },
+  {
+    "question": "Warum ist Full-array oft teurer als Edge-LED?",
+    "options": [ "Wegen der vielen LEDs und besseren Bildqualität", "Weil das Gehäuse bunter ist", "Weil es weniger Strom braucht" ],
+    "answer": 1
+  },
+  {
+    "question": "Wo befinden sich die LEDs bei Edge-LED?",
+    "options": [ "Nur am Rand des Bildschirms ", "Hinter dem ganzen Panel", "Vor dem Bildschirm" ],
+    "answer": 1
+  }
+]

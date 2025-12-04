@@ -1,179 +1,464 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <title>Lernmodule – Video, Quiz, Erklärung</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body { font-family: system-ui, sans-serif; margin: 20px; }
-    #video, #quiz, #explanation { display: none; margin-top: 20px; }
-    .question { margin-bottom: 16px; }
-    button { padding: 8px 12px; }
-    .score { margin-top: 10px; color: #0b5; }
-  </style>
+    <meta charset="UTF-8" />
+    <title>Lernmodule – Video, Quiz, Erklärung</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            margin: 20px;
+        }
+
+        #video,
+        #quiz,
+        #explanation,
+        #pixelBoard,
+        #finalResults {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .question {
+            margin-bottom: 16px;
+        }
+
+        button {
+            padding: 8px 12px;
+        }
+
+        .score {
+            margin-top: 10px;
+            color: #0b5;
+        }
+
+        /* Erklärungs-Text: Zeilenumbrüche (\n) als Absätze anzeigen */
+        #explanationText {
+            white-space: pre-line;
+        }
+
+        #pixelBoard {
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .pixel-tools {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        #pixelPalette button {
+            width: 28px;
+            height: 28px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        #pixelGrid {
+            display: grid;
+            gap: 2px;
+            justify-content: start;
+            margin-bottom: 16px;
+        }
+
+        .pixel-cell {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            background: #f4f4f4;
+            cursor: crosshair;
+            transition: transform 0.1s ease;
+        }
+
+        .pixel-cell:hover {
+            transform: scale(1.05);
+        }
+
+        #finalResults table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        #finalResults th,
+        #finalResults td {
+            border: 1px solid #ccc;
+            padding: 6px 8px;
+            text-align: left;
+        }
+
+        #finalResults th {
+            background-color: #f0f0f0;
+        }
+    </style>
 </head>
 <body>
-  <h1>Lernmodule</h1>
+    <h1>Lernmodule</h1>
 
-  <div id="moduleInfo"></div>
+    <div id="moduleInfo"></div>
 
-  <div id="video">
-    <video id="videoPlayer" width="720" controls></video>
-  </div>
+    <div id="linkBlock" style="display:none; margin-top:20px;">
+        <h2>Material</h2>
+        <p>
+            Bitte öffne den Link unten.
+            Das Quiz startet automatisch in <span id="timer">60</span> Sekunden.
+        </p>
+        <p>
+            <a id="resourceLink" href="#" target="_blank">Link öffnen</a>
+        </p>
+    </div>
 
-  <div id="quiz">
-    <h2>Quiz</h2>
-    <div id="quizContent"></div>
-    <button id="submitQuiz">Antworten prüfen & speichern</button>
-    <div id="result" class="score"></div>
-  </div>
+    <div id="video">
+        <video id="videoPlayer" width="720" controls></video>
+    </div>
 
-  <div id="explanation">
-    <h2>Erklärung</h2>
-    <p id="explanationText"></p>
-    <button id="nextModule">Nächstes Modul</button>
-  </div>
+    <div id="pixelBoard">
+        <h2>Pixel-Spielplatz</h2>
+        <p>Male dein eigenes Pixel-Kunstwerk. Danach geht es weiter mit dem Quiz.</p>
+        <div class="pixel-tools">
+            <strong>Farben:</strong>
+            <div id="pixelPalette"></div>
+            <button id="pixelClear">Zurücksetzen</button>
+        </div>
+        <div id="pixelGrid"></div>
+        <button id="pixelStartQuiz">Zum Quiz</button>
+    </div>
 
-  <script>
-    const modules = [
-      { video: "videos/Video1.mp4", quiz: "quizzes/quiz1.json", explanation: "erklaerung/erklarung1.json" },
-      { video: null,                quiz: "quizzes/quiz2.json", explanation: "Hier die Erklärung zum zweiten Quiz." }
-    ];
+    <div id="quiz">
+        <h2>Quiz</h2>
+        <div id="quizContent"></div>
+        <button id="submitQuiz">Antworten prüfen & speichern</button>
+        <div id="result" class="score"></div>
+    </div>
 
-    let currentModule = 0;
-    let currentQuestions = [];
-    const defaultApiBaseUrl = "http://localhost:5017";
-    const apiBaseUrl = window.location.origin.startsWith("http")
-      ? window.location.origin
-      : defaultApiBaseUrl;
+    <div id="explanation">
+        <h2>Erklärung</h2>
+        <p id="explanationText"></p>
+        <button id="nextModule">Nächstes Modul</button>
+    </div>
 
-    function setVisible(section) {
-      document.getElementById("video").style.display       = section === "video" ? "block" : "none";
-      document.getElementById("quiz").style.display        = section === "quiz" ? "block" : "none";
-      document.getElementById("explanation").style.display = section === "explanation" ? "block" : "none";
-    }
+    <div id="finalResults">
+        <h2>Ergebnisse aller Spieler</h2>
+        <p>Hier siehst du alle gespeicherten Quiz-Durchläufe.</p>
+        <div id="finalResultsContainer">Lade Ergebnisse ...</div>
+    </div>
 
-    function loadModule(index) {
-      const m = modules[index];
-      if (!m) {
-        document.body.innerHTML = "<h2>Alle Module abgeschlossen 🎉</h2><p>Ergebnisse kannst du unter /api/quiz/runs abrufen.</p>";
-        return;
-      }
+    <script>
+        const modules = [
+            { video: "videos/Video1.mp4", quiz: "quizzes/quiz1.json", explanation: "erklaerung/erklaerung1.json" },
+            { video: null, quiz: "quizzes/quiz2.json", explanation: "erklaerung/erklaerung2.json" },
+            { video: null, quiz: "quizzes/quiz3.json", explanation: "erklaerung/erklaerung3.json" },
+            { video: null, quiz: "quizzes/quiz4.json", explanation: "erklaerung/erklaerung4.json" },
+            { video: null, quiz: "quizzes/quiz5.json", explanation: "erklaerung/erklaerung5.json" },
+            { video: null, quiz: "quizzes/quiz7.json", explanation: "erklaerung/erklaerung7.json" },
+            { video: null, quiz: "quizzes/quiz8.json", explanation: "erklaerung/erklaerung8.json" },
+           
+            {
+                pixelBoard: {
+                    size: 16,
+                    palette: ["#111111", "#ff4757", "#ffa801", "#1e90ff", "#2ed573", "#ffffff"]
+                },
+                
+            },
+        ];
 
-      document.getElementById("moduleInfo").textContent = `Modul ${index + 1} von ${modules.length}`;
+        let currentModule = 0;
+        let currentQuestions = [];
+        let timerInterval = null;
+        let pixelConfig = null;
+        let pixelBoardQuizFile = null;
+        let currentColor = "#111111";
+        let mouseDown = false;
+        const defaultApiBaseUrl = "http://localhost:5017";
+        const apiBaseUrl = window.location.origin.startsWith("http")
+            ? window.location.origin
+            : defaultApiBaseUrl;
 
-      if (m.video) {
-        setVisible("video");
-        const player = document.getElementById("videoPlayer");
-        player.src = m.video;
-        player.onended = () => showQuiz(m.quiz);
-      } else {
-        showQuiz(m.quiz);
-      }
-    }
-
-    async function showQuiz(quizFile) {
-      setVisible("quiz");
-      document.getElementById("result").textContent = "";
-      const res = await fetch(quizFile);
-      currentQuestions = await res.json();
-
-      const quizContent = document.getElementById("quizContent");
-      quizContent.innerHTML = "";
-      currentQuestions.forEach((q, i) => {
-        const div = document.createElement("div");
-        div.className = "question";
-        const optionsHtml = q.options.map((opt, j) =>
-          `<label><input type="radio" name="q${i}" value="${j}"> ${opt}</label>`
-        ).join("<br>");
-        div.innerHTML = `<p><strong>Frage ${i+1}:</strong> ${q.question}</p>${optionsHtml}`;
-        quizContent.appendChild(div);
-      });
-
-      document.getElementById("submitQuiz").onclick = submitQuizAnswers;
-    }
-
-    async function submitQuizAnswers() {
-      const answers = currentQuestions.map((q, i) => {
-        const selected = document.querySelector(`input[name="q${i}"]:checked`);
-        return {
-          question: q.question,
-          selectedIndex: selected ? parseInt(selected.value, 10) : null,
-          correctIndex: q.answer
-        };
-      });
-
-      const payload = { module: currentModule, answers };
-      const resultElement = document.getElementById("result");
-
-      try {
-        const response = await fetch(`${apiBaseUrl}/api/quiz/result`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) {
-          throw new Error(`Server antwortete mit Status ${response.status}`);
+        function setVisible(section) {
+            document.getElementById("linkBlock").style.display = section === "link" ? "block" : "none";
+            document.getElementById("video").style.display = section === "video" ? "block" : "none";
+            document.getElementById("pixelBoard").style.display = section === "pixel" ? "block" : "none";
+            document.getElementById("quiz").style.display = section === "quiz" ? "block" : "none";
+            document.getElementById("explanation").style.display = section === "explanation" ? "block" : "none";
+            document.getElementById("finalResults").style.display = section === "results" ? "block" : "none";
         }
 
-        const summary = await response.json();
-        const totalQuestions = summary.totalQuestions ?? summary.TotalQuestions ?? summary.total ?? summary.Total ?? answers.length;
-        const correctCount = summary.correctCount ?? summary.CorrectCount ?? summary.correct ?? summary.Correct ?? 0;
-        const moduleIndex = (summary.moduleIndex ?? summary.ModuleIndex ?? currentModule) + 1;
+        function loadModule(index) {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
 
-        resultElement.textContent = `Ergebnis: ${correctCount} von ${totalQuestions} richtig (Modul ${moduleIndex}).`;
-        await showExplanation(modules[currentModule]?.explanation);
-      } catch (error) {
-        console.error("Quiz-Ergebnis konnte nicht gespeichert werden:", error);
-        resultElement.textContent = "Speichern fehlgeschlagen (siehe Konsole). Deine Antworten wurden lokal bewertet.";
-        await showExplanation(modules[currentModule]?.explanation);
-      }
+            const m = modules[index];
+            if (!m) {
+                showFinalResults();
+                return;
+            }
+
+            document.getElementById("moduleInfo").textContent = `Modul ${index + 1} von ${modules.length}`;
+
+            if (m.video) {
+                setVisible("video");
+                const player = document.getElementById("videoPlayer");
+                player.src = m.video;
+                player.onended = () => showQuiz(m.quiz);
+            } else if (m.pixelBoard) {
+                startPixelBoard(m.pixelBoard, m.quiz);
+            } else if (m.link) {
+                startLinkTimer(m.link, m.quiz);
+            } else {
+                showQuiz(m.quiz);
+            }
+        function startPixelBoard(config, quizFile) {
+            pixelConfig = config;
+            pixelBoardQuizFile = quizFile;
+            currentColor = config.palette?.[0] ?? "#111111";
+            buildPixelPalette(config.palette ?? ["#111111", "#ffffff"]);
+            buildPixelGrid(config.size ?? 16);
+            setVisible("pixel");
+
+            document.getElementById("pixelStartQuiz").onclick = () => showQuiz(pixelBoardQuizFile);
+            document.getElementById("pixelClear").onclick = clearPixelBoard;
+        }
+
+        function buildPixelPalette(palette) {
+            const paletteContainer = document.getElementById("pixelPalette");
+            paletteContainer.innerHTML = "";
+            palette.forEach(color => {
+                const button = document.createElement("button");
+                button.style.background = color;
+                button.title = color;
+                button.onclick = () => currentColor = color;
+                paletteContainer.appendChild(button);
+            });
+        }
+
+        function buildPixelGrid(size) {
+            const grid = document.getElementById("pixelGrid");
+            grid.innerHTML = "";
+            grid.style.gridTemplateColumns = `repeat(${size}, 24px)`;
+            grid.style.gridTemplateRows = `repeat(${size}, 24px)`;
+
+            for (let i = 0; i < size * size; i++) {
+                const cell = document.createElement("div");
+                cell.className = "pixel-cell";
+                cell.dataset.index = i;
+                cell.onmousedown = () => paintCell(cell);
+                cell.onmouseover = (e) => {
+                    if (mouseDown) {
+                        paintCell(cell);
+                    }
+                };
+                grid.appendChild(cell);
+            }
+        }
+
+        function paintCell(cell) {
+            cell.style.background = currentColor;
+            cell.dataset.color = currentColor;
+        }
+
+        function clearPixelBoard() {
+            document.querySelectorAll(".pixel-cell").forEach(cell => {
+                cell.style.background = "#f4f4f4";
+                delete cell.dataset.color;
+            });
+        }
+
+        document.addEventListener("mousedown", () => { mouseDown = true; });
+        document.addEventListener("mouseup", () => { mouseDown = false; });
+
+        }
+        function startVideo(videoSrc, quizFile) {
+            setVisible("video");
+            const player = document.getElementById("videoPlayer");
+            player.src = videoSrc;
+            player.onended = () => showQuiz(quizFile);
+        }
+
+        function startLinkTimer(url, quizFile) {
+    setVisible("link");
+
+    const timerDisplay = document.getElementById("timer");
+    const openBtn = document.getElementById("openLinkBtn");
+
+    let timeLeft = 60;
+    timerDisplay.textContent = timeLeft;
+    openedWindow = null;
+
+    openBtn.onclick = () => {
+        if (!openedWindow || openedWindow.closed) {
+            openedWindow = window.open(url, "_blank", "noopener");
+        }
+    };
+
+    if (timerInterval) {
+        clearInterval(timerInterval);
     }
 
-    async function showExplanation(source) {
-      setVisible("explanation");
-      const explanationText = document.getElementById("explanationText");
-      explanationText.textContent = await loadExplanationText(source);
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        timerDisplay.textContent = timeLeft;
 
-      const button = document.getElementById("nextModule");
-      button.onclick = () => {
-        currentModule++;
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+
+            if (openedWindow && !openedWindow.closed) {
+                openedWindow.close();
+            }
+
+            showQuiz(quizFile);
+        }
+    }, 1000);
+}
+
+        async function showQuiz(quizFile) {
+            setVisible("quiz");
+            document.getElementById("result").textContent = "";
+            const res = await fetch(quizFile);
+            currentQuestions = await res.json();
+
+            const quizContent = document.getElementById("quizContent");
+            quizContent.innerHTML = "";
+            currentQuestions.forEach((q, i) => {
+                const div = document.createElement("div");
+                div.className = "question";
+                const optionsHtml = q.options.map((opt, j) =>
+                    `<label><input type="radio" name="q${i}" value="${j}"> ${opt}</label>`
+                ).join("<br>");
+                div.innerHTML = `<p><strong>Frage ${i + 1}:</strong> ${q.question}</p>${optionsHtml}`;
+                quizContent.appendChild(div);
+            });
+
+            document.getElementById("submitQuiz").onclick = submitQuizAnswers;
+        }
+
+        async function submitQuizAnswers() {
+            const answers = currentQuestions.map((q, i) => {
+                const selected = document.querySelector(`input[name="q${i}"]:checked`);
+                return {
+                    question: q.question,
+                    selectedIndex: selected ? parseInt(selected.value, 10) : null,
+                    correctIndex: q.answer
+                };
+            });
+
+            const payload = { module: currentModule, answers };
+            const resultElement = document.getElementById("result");
+
+            try {
+                await fetch(`${apiBaseUrl}/api/quiz/result`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+            } catch (err) {
+                console.warn("Server konnte nicht speichern, benutze lokale Auswertung.");
+            }
+
+            await showExplanation(modules[currentModule].explanation);
+        }
+
+        async function showExplanation(source) {
+            setVisible("explanation");
+            const explanationText = document.getElementById("explanationText");
+            explanationText.textContent = await loadExplanationText(source);
+
+            document.getElementById("nextModule").onclick = () => {
+                currentModule++;
+                loadModule(currentModule);
+            };
+        }
+
+        async function loadExplanationText(source) {
+            if (!source) return "Keine Erklärung vorhanden.";
+
+            // Wenn ein Pfad zu einer JSON-Datei angegeben ist, diese laden
+            if (typeof source === "string" && source.trim().toLowerCase().endsWith(".json")) {
+                try {
+                    const response = await fetch(source);
+                    if (!response.ok) {
+                        throw new Error(`Status ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    // Verschiedene sinnvolle Formate erlauben:
+                    if (typeof data === "string") return data;
+                    if (Array.isArray(data)) return data.join(" ");
+                    if (typeof data === "object" && data !== null) {
+                        if (typeof data.text === "string") return data.text;
+                        if (typeof data.content === "string") return data.content;
+                        if (typeof data.description === "string") return data.description;
+                    }
+
+                    return "Erklärung geladen, aber das Format wurde nicht erkannt.";
+                } catch (error) {
+                    console.error("Erklärung konnte nicht geladen werden:", error);
+                    return "Erklärung konnte nicht geladen werden.";
+                }
+            }
+
+            // Sonst wird die Erklärung als normaler Text angezeigt
+            return String(source);
+        }
+
+        async function showFinalResults() {
+            setVisible("results");
+            document.getElementById("moduleInfo").textContent = "Alle Module abgeschlossen 🎉";
+
+            const container = document.getElementById("finalResultsContainer");
+            container.textContent = "Lade Ergebnisse ...";
+
+            try {
+                const response = await fetch(`${apiBaseUrl}/api/quiz/runs`);
+                if (!response.ok) {
+                    throw new Error(`Status ${response.status}`);
+                }
+
+                const runs = await response.json();
+
+                if (!runs || runs.length === 0) {
+                    container.textContent = "Es sind noch keine Ergebnisse vorhanden.";
+                    return;
+                }
+
+                let html = "<table class=\"results-table\"><thead><tr>" +
+                    "<th>ID</th><th>Modul</th><th>Richtig</th><th>Fragen gesamt</th><th>Datum</th>" +
+                    "</tr></thead><tbody>";
+
+                runs.forEach(run => {
+                    const id = run.id ?? run.Id;
+                    const moduleIndex = (run.moduleIndex ?? run.ModuleIndex ?? 0) + 1;
+                    const correct = run.correctCount ?? run.CorrectCount ?? 0;
+                    const total = run.totalQuestions ?? run.TotalQuestions ?? 0;
+                    const createdRaw = run.createdAt ?? run.CreatedAt;
+                    const created = createdRaw ? new Date(createdRaw).toLocaleString("de-DE") : "";
+
+                    html += `<tr>
+                        <td>${id}</td>
+                        <td>${moduleIndex}</td>
+                        <td>${correct}</td>
+                        <td>${total}</td>
+                        <td>${created}</td>
+                    </tr>`;
+                });
+
+                html += "</tbody></table>";
+                container.innerHTML = html;
+            } catch (error) {
+                console.error("Ergebnisse konnten nicht geladen werden:", error);
+                container.textContent = "Ergebnisse konnten nicht geladen werden.";
+            }
+        }
+
         loadModule(currentModule);
-      };
-    }
-
-    async function loadExplanationText(source) {
-      if (!source) return "Keine Erklärung vorhanden.";
-
-      // Falls eine JSON-Datei angegeben wurde, versuchen wir diese zu laden
-      if (typeof source === "string" && source.trim().toLowerCase().endsWith(".json")) {
-        try {
-          const response = await fetch(source);
-          if (!response.ok) {
-            throw new Error(`Antwortstatus ${response.status}`);
-          }
-
-          const data = await response.json();
-          if (typeof data === "string") return data;
-          if (Array.isArray(data)) return data.join(" ");
-          if (typeof data === "object" && data !== null) {
-            if (typeof data.text === "string") return data.text;
-            if (typeof data.content === "string") return data.content;
-          }
-
-          return "Erklärung geladen, aber unbekanntes Format.";
-        } catch (error) {
-          console.error("Erklärung konnte nicht geladen werden:", error);
-          return "Erklärung konnte nicht geladen werden.";
-        }
-      }
-
-      // Standard: direkter Text
-      return String(source);
-    }
-
-    loadModule(currentModule);
-  </script>
+    </script>
 </body>
 </html>

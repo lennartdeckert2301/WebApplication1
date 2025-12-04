@@ -1,0 +1,4 @@
+[
+{ "question": "Was beschreibt die Auflösung eines Monitors?", "options": ["Die Helligkeit des Bildschirms in Candela","Die Anzahl der Pixel horizontal und vertikal auf dem Bildschirm","Die Größe des Monitors in Zoll"], "answer": 1},
+{ "question": "Warum erscheinen Bilder bei niedriger Auflösung auf großen Monitoren unscharf ", "options": ["Weil die vorhandenen Pixel auf die große Fläche gestreckt werden und Details verloren gehen ","Weil der Monitor die Helligkeit reduziert", "Weil der Monitor die Farben nicht richtig darstellen kann"], "answer": 0}
+]
